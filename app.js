@@ -81,8 +81,11 @@ function parseEquation(str) {
   return { a, b, c };
 }
 
+// Detect whether the user explicitly typed a decimal point.
+// Any appearance of "." in the raw equation triggers decimal
+// formatting; otherwise numbers are rendered as fractions.
 function containsDecimal(str) {
-  return /\d+\.\d+/.test(str);
+  return str.includes('.');
 }
 
 function gcd(a, b) {
@@ -148,30 +151,36 @@ function displayForms(elemId, eq, raw, useDecimal) {
 function plot() {
   const raw1 = document.getElementById('eq1').value;
   const raw2 = document.getElementById('eq2').value;
-  const eq1 = parseEquation(raw1);
-  const eq2 = parseEquation(raw2);
 
-  const useDec1 = containsDecimal(raw1);
-  const useDec2 = containsDecimal(raw2);
-  const useDecInter = useDec1 || useDec2;
+  const data = [
+    { raw: raw1, eq: parseEquation(raw1), useDec: containsDecimal(raw1) },
+    { raw: raw2, eq: parseEquation(raw2), useDec: containsDecimal(raw2) }
+  ];
 
-  displayForms('eq1-forms', eq1, raw1, useDec1);
-  displayForms('eq2-forms', eq2, raw2, useDec2);
-
-  const equations = [eq1, eq2].filter(Boolean);
-  const intercepts = [];
-  const xVals = [0];
-  const yVals = [0];
-
-  equations.forEach(eq => {
-    const xi = eq.a !== 0 ? eq.c / eq.a : null;
-    const yi = eq.b !== 0 ? eq.c / eq.b : null;
-    intercepts.push({ xi, yi });
-    if (xi !== null && isFinite(xi)) xVals.push(xi);
-    if (yi !== null && isFinite(yi)) yVals.push(yi);
+  // Show equation forms for each input
+  data.forEach((d, i) => {
+    displayForms(`eq${i + 1}-forms`, d.eq, d.raw, d.useDec);
   });
 
+  // Collect valid equations and intercepts
+  const equations = [];
+  const xVals = [0];
+  const yVals = [0];
+  data.forEach(d => {
+    if (d.eq) {
+      const xi = d.eq.a !== 0 ? d.eq.c / d.eq.a : null;
+      const yi = d.eq.b !== 0 ? d.eq.c / d.eq.b : null;
+      if (xi !== null && isFinite(xi)) xVals.push(xi);
+      if (yi !== null && isFinite(yi)) yVals.push(yi);
+      equations.push({ ...d, xi, yi });
+    }
+  });
+
+  // Intersection
   let intersection = null;
+  const eq1 = data[0].eq;
+  const eq2 = data[1].eq;
+  const useDecInter = data[0].useDec || data[1].useDec;
   if (eq1 && eq2) {
     const det = eq1.a * eq2.b - eq2.a * eq1.b;
     if (Math.abs(det) > 1e-8) {
@@ -199,9 +208,8 @@ function plot() {
   const traces = [];
   let solHtml = '';
 
-  equations.forEach((eq, idx) => {
-    const { xi, yi } = intercepts[idx];
-    const useDec = idx === 0 ? useDec1 : useDec2;
+  equations.forEach((d, idx) => {
+    const { eq, useDec, xi, yi } = d;
     let xs = [];
     let ys = [];
     if (eq.b !== 0) {
@@ -216,11 +224,11 @@ function plot() {
     }
     traces.push({ x: xs, y: ys, mode: 'lines', name: 'Eq' + (idx + 1) });
 
-    let block = `<div class="solution-block"><h3>Equation ${idx + 1}</h3>`;
+    let block = `<div class='solution-block'><h3>Equation ${idx + 1}</h3>`;
     block += `<p>Standard form: ${formatStandard(eq, useDec)}</p>`;
 
     if (xi !== null) {
-      traces.push({ x: [xi], y: [0], mode: 'markers', name: `Eq${idx + 1} x-int` });
+      traces.push({ x: [xi], y: [0], mode: 'markers', name: 'Eq' + (idx + 1) + ' x-int' });
       const sign = eq.b >= 0 ? '+' : '-';
       block += `<p><strong>x-intercept</strong></p><ol>`;
       block += `<li>Set y = 0: ${formatValue(eq.a, useDec)}x ${sign} ${formatValue(Math.abs(eq.b), useDec)}·0 = ${formatValue(eq.c, useDec)}</li>`;
@@ -232,7 +240,7 @@ function plot() {
     }
 
     if (yi !== null) {
-      traces.push({ x: [0], y: [yi], mode: 'markers', name: `Eq${idx + 1} y-int` });
+      traces.push({ x: [0], y: [yi], mode: 'markers', name: 'Eq' + (idx + 1) + ' y-int' });
       const sign = eq.a >= 0 ? '+' : '-';
       block += `<p><strong>y-intercept</strong></p><ol>`;
       block += `<li>Set x = 0: ${formatValue(eq.a, useDec)}·0 ${sign} ${formatValue(Math.abs(eq.b), useDec)}y = ${formatValue(eq.c, useDec)}</li>`;
@@ -249,7 +257,7 @@ function plot() {
 
   if (intersection) {
     traces.push({ x: [intersection.x], y: [intersection.y], mode: 'markers', marker: { size: 10 }, name: 'Intersection' });
-    let inter = '<div class="solution-block"><h3>Intersection</h3>';
+    let inter = `<div class='solution-block'><h3>Intersection</h3>`;
     if (eq1.b !== 0 && eq2.b !== 0) {
       inter += '<p>Eliminate y:</p><ol>';
       inter += `<li>Multiply Eq1 by ${formatValue(eq2.b, useDecInter)} and Eq2 by ${formatValue(eq1.b, useDecInter)}.</li>`;
@@ -294,8 +302,7 @@ function plot() {
     solHtml += '<p>No unique intersection</p>';
   }
 
-  // Allow Plotly to auto-scale around the plotted data so that large
-  // intercepts or intersections stay in view.
+  // Plotly auto-scales around data
   Plotly.newPlot('graph', traces, {
     margin: { t: 10 },
     xaxis: { zeroline: true, autorange: true },
