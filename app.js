@@ -253,10 +253,12 @@ function plot() {
     solHtml += '<p>No unique intersection</p>';
   }
 
+  // Allow Plotly to auto-scale around the plotted data so that large
+  // intercepts or intersections stay in view.
   Plotly.newPlot('graph', traces, {
     margin: { t: 10 },
-    xaxis: { zeroline: true, range: [xMin, xMax] },
-    yaxis: { zeroline: true, range: [yMin, yMax] }
+    xaxis: { zeroline: true, autorange: true },
+    yaxis: { zeroline: true, autorange: true }
   });
 
   document.getElementById('solutions').innerHTML = solHtml;
