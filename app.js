@@ -2,31 +2,33 @@ function parseEquation(str) {
   if (!str) return null;
   str = str.replace(/\s+/g, '').toLowerCase();
 
+  function parseCoef(s) {
+    if (s === '' || s === '+') return 1;
+    if (s === '-') return -1;
+    if (s.includes('/')) {
+      const [num, den] = s.split('/').map(parseFloat);
+      if (!isFinite(num) || !isFinite(den) || den === 0) return NaN;
+      return num / den;
+    }
+    return parseFloat(s);
+  }
+
   // y = mx + b
-  let slope = str.match(/^y=([+-]?\d*\.?\d*)x([+-]\d*\.?\d*)?$/);
+  let slope = str.match(/^y=([+-]?[\d./]*)x([+-][\d./]*)?$/);
   if (slope) {
-    let mStr = slope[1];
-    let bStr = slope[2] || '0';
-    if (mStr === '' || mStr === '+') mStr = '1';
-    if (mStr === '-') mStr = '-1';
-    let m = parseFloat(mStr);
-    let b = parseFloat(bStr.replace('+', ''));
+    let m = parseCoef(slope[1]);
+    let b = parseCoef(slope[2] || '0');
+    if (!isFinite(m) || !isFinite(b)) return null;
     return { a: -m, b: 1, c: b };
   }
 
   // ax + by = c
-  let standard = str.match(/^([+-]?\d*\.?\d*)x([+-]\d*\.?\d*)y=([+-]?\d*\.?\d*)$/);
+  let standard = str.match(/^([+-]?[\d./]*)x([+-][\d./]*)y=([+-]?[\d./]*)$/);
   if (standard) {
-    let aStr = standard[1];
-    let bStr = standard[2];
-    let cStr = standard[3];
-    if (aStr === '' || aStr === '+') aStr = '1';
-    if (aStr === '-') aStr = '-1';
-    if (bStr === '' || bStr === '+') bStr = '1';
-    if (bStr === '-') bStr = '-1';
-    let a = parseFloat(aStr);
-    let b = parseFloat(bStr.replace('+', ''));
-    let c = parseFloat(cStr);
+    let a = parseCoef(standard[1]);
+    let b = parseCoef(standard[2]);
+    let c = parseCoef(standard[3]);
+    if (!isFinite(a) || !isFinite(b) || !isFinite(c)) return null;
     return { a, b, c };
   }
   return null;
