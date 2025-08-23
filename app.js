@@ -1,11 +1,33 @@
 function parseEquation(str) {
   if (!str) return null;
 
-  // normalize whitespace, parentheses, and various minus symbols
+  // normalize whitespace, parentheses, unicode minus signs, and common fractions
+  const fracMap = {
+    '\u00BC': '1/4', // ¼
+    '\u00BD': '1/2', // ½
+    '\u00BE': '3/4', // ¾
+    '\u2150': '1/7',
+    '\u2151': '1/9',
+    '\u2152': '1/10',
+    '\u2153': '1/3',
+    '\u2154': '2/3',
+    '\u2155': '1/5',
+    '\u2156': '2/5',
+    '\u2157': '3/5',
+    '\u2158': '4/5',
+    '\u2159': '1/6',
+    '\u215A': '5/6',
+    '\u215B': '1/8',
+    '\u215C': '3/8',
+    '\u215D': '5/8',
+    '\u215E': '7/8'
+  };
   str = str
-    .replace(/\u2212|\u2013|\u2014|\uFE63|\uFF0D/g, '-')
+    .replace(/[\u2212\u2010-\u2015\uFE63\uFF0D]/g, '-') // various minus/dash characters
+    .replace(/[\u00B7\u22C5\u00D7]/g, '') // multiplication dots / times signs
     .replace(/\s+/g, '')
     .replace(/[()]/g, '')
+    .replace(/[\u00BC-\u00BE\u2150-\u215E]/g, m => fracMap[m] || m)
     .toLowerCase();
 
   function parseCoef(s) {
@@ -55,6 +77,7 @@ function parseEquation(str) {
   const b = left.y - right.y;
   const c = right.const - left.const;
   if (!isFinite(a) || !isFinite(b) || !isFinite(c)) return null;
+  if (a === 0 && b === 0) return null;
   return { a, b, c };
 }
 
