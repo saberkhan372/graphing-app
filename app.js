@@ -87,38 +87,10 @@ function parseEquation(str) {
   return { a, b, c, hasDecimal };
 }
 
-function gcd(a, b) {
-  if (!b) return Math.abs(a);
-  return gcd(b, a % b);
-}
-
-function toFractionParts(num) {
-  // returns {n, d} where n/d approximates num
-  let sign = num < 0 ? -1 : 1;
-  num = Math.abs(num);
-  let h1 = 1, h2 = 0, k1 = 0, k2 = 1, b = num;
-  const tol = 1e-10;
-  while (true) {
-    const a = Math.floor(b);
-    const h = a * h1 + h2;
-    const k = a * k1 + k2;
-    if (Math.abs(num - h / k) < tol) {
-      const g = gcd(h, k);
-      return { n: sign * (h / g), d: k / g };
-    }
-    h2 = h1; h1 = h;
-    k2 = k1; k1 = k;
-    b = 1 / (b - a);
-  }
-}
-
 function formatValue(num, useDecimal) {
   if (!Number.isFinite(num)) return 'N/A';
   if (useDecimal) return num.toFixed(2);
-  const { n, d } = toFractionParts(num);
-  if (d === 1) return `${n}`;
-  const sign = n < 0 ? '-' : '';
-  return `${sign}\\frac{${Math.abs(n)}}{${d}}`;
+  return new Fraction(num).toFraction();
 }
 
 function formatStandard(eq, useDecimal) {
