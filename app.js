@@ -135,10 +135,27 @@ function plot() {
     }
   }
 
+  const allX = traces.flatMap(t => t.x);
+  const allY = traces.flatMap(t => t.y);
+  let xMin = Math.min(...allX);
+  let xMax = Math.max(...allX);
+  let yMin = Math.min(...allY);
+  let yMax = Math.max(...allY);
+  if (!isFinite(xMin) || !isFinite(xMax)) {
+    xMin = -10;
+    xMax = 10;
+  }
+  if (!isFinite(yMin) || !isFinite(yMax)) {
+    yMin = -10;
+    yMax = 10;
+  }
+  const padX = (xMax - xMin) * 0.1 || 1;
+  const padY = (yMax - yMin) * 0.1 || 1;
+
   Plotly.newPlot('graph', traces, {
     margin: { t: 10 },
-    xaxis: { zeroline: true },
-    yaxis: { zeroline: true, scaleanchor: 'x' }
+    xaxis: { zeroline: true, range: [xMin - padX, xMax + padX] },
+    yaxis: { zeroline: true, range: [yMin - padY, yMax + padY] }
   });
 
   document.getElementById('solutions').innerHTML = solHtml;
