@@ -81,16 +81,52 @@ function parseEquation(str) {
   return { a, b, c };
 }
 
-function formatNumber(num) {
-  return Number.isFinite(num) ? num.toFixed(2) : 'N/A';
+function containsDecimal(str) {
+  return str.includes('.');
 }
 
-function formatStandard(eq) {
+function gcd(a, b) {
+  if (!b) return Math.abs(a);
+  return gcd(b, a % b);
+}
+
+function toFraction(num) {
+  if (!Number.isFinite(num)) return 'N/A';
+  if (num === 0) return '0';
+  let sign = num < 0 ? -1 : 1;
+  num = Math.abs(num);
+  let h1 = 1, h2 = 0, k1 = 0, k2 = 1, b = num;
+  const tol = 1e-10;
+  while (true) {
+    const a = Math.floor(b);
+    const h = a * h1 + h2;
+    const k = a * k1 + k2;
+    if (Math.abs(num - h / k) < tol) {
+      const g = gcd(h, k);
+      const n = sign * (h / g);
+      const d = k / g;
+      return d === 1 ? `${n}` : `${n}/${d}`;
+    }
+    h2 = h1; h1 = h;
+    k2 = k1; k1 = k;
+    b = 1 / (b - a);
+  }
+}
+
+function formatValue(num, useDecimal) {
+  if (!Number.isFinite(num)) return 'N/A';
+  return useDecimal ? num.toFixed(2) : toFraction(num);
+}
+
+function formatStandard(eq, useDecimal) {
   const sign = eq.b >= 0 ? '+' : '-';
-  return `${eq.a.toFixed(2)}x ${sign} ${Math.abs(eq.b).toFixed(2)}y = ${eq.c.toFixed(2)}`;
+  const a = formatValue(eq.a, useDecimal);
+  const b = formatValue(Math.abs(eq.b), useDecimal);
+  const c = formatValue(eq.c, useDecimal);
+  return `${a}x ${sign} ${b}y = ${c}`;
 }
 
-function displayForms(elemId, eq, raw) {
+function displayForms(elemId, eq, raw, useDecimal) {
   const elem = document.getElementById(elemId);
   if (!raw.trim()) {
     elem.textContent = '';
@@ -103,9 +139,9 @@ function displayForms(elemId, eq, raw) {
   const m = -eq.a / eq.b;
   const b = eq.c / eq.b;
   const formatTerm = (coef, variable) =>
-    `${coef >= 0 ? '+' : '-'} ${Math.abs(coef).toFixed(2)}${variable}`;
-  const std = formatStandard(eq);
-  const slope = `y = ${m.toFixed(2)}x ${formatTerm(b, '')}`;
+    `${coef >= 0 ? '+' : '-'} ${formatValue(Math.abs(coef), useDecimal)}${variable}`;
+  const std = formatStandard(eq, useDecimal);
+  const slope = `y = ${formatValue(m, useDecimal)}x ${formatTerm(b, '')}`;
   elem.textContent = std + '\n' + slope;
 }
 
@@ -115,8 +151,12 @@ function plot() {
   const eq1 = parseEquation(raw1);
   const eq2 = parseEquation(raw2);
 
-  displayForms('eq1-forms', eq1, raw1);
-  displayForms('eq2-forms', eq2, raw2);
+  const useDec1 = containsDecimal(raw1);
+  const useDec2 = containsDecimal(raw2);
+  const useDecInter = useDec1 || useDec2;
+
+  displayForms('eq1-forms', eq1, raw1, useDec1);
+  displayForms('eq2-forms', eq2, raw2, useDec2);
 
   const equations = [eq1, eq2].filter(Boolean);
   const intercepts = [];
@@ -161,6 +201,7 @@ function plot() {
 
   equations.forEach((eq, idx) => {
     const { xi, yi } = intercepts[idx];
+    const useDec = idx === 0 ? useDec1 : useDec2;
     let xs = [];
     let ys = [];
     if (eq.b !== 0) {
@@ -176,16 +217,16 @@ function plot() {
     traces.push({ x: xs, y: ys, mode: 'lines', name: 'Eq' + (idx + 1) });
 
     let block = `<div class="solution-block"><h3>Equation ${idx + 1}</h3>`;
-    block += `<p>Standard form: ${formatStandard(eq)}</p>`;
+    block += `<p>Standard form: ${formatStandard(eq, useDec)}</p>`;
 
     if (xi !== null) {
       traces.push({ x: [xi], y: [0], mode: 'markers', name: `Eq${idx + 1} x-int` });
       const sign = eq.b >= 0 ? '+' : '-';
       block += `<p><strong>x-intercept</strong></p><ol>`;
-      block += `<li>Set y = 0: ${eq.a.toFixed(2)}x ${sign} ${Math.abs(eq.b).toFixed(2)}·0 = ${eq.c.toFixed(2)}</li>`;
-      block += `<li>Simplify: ${eq.a.toFixed(2)}x = ${eq.c.toFixed(2)}</li>`;
-      block += `<li>Solve: x = ${formatNumber(xi)}</li>`;
-      block += `</ol><p>So the x-intercept is (${formatNumber(xi)}, 0)</p>`;
+      block += `<li>Set y = 0: ${formatValue(eq.a, useDec)}x ${sign} ${formatValue(Math.abs(eq.b), useDec)}·0 = ${formatValue(eq.c, useDec)}</li>`;
+      block += `<li>Simplify: ${formatValue(eq.a, useDec)}x = ${formatValue(eq.c, useDec)}</li>`;
+      block += `<li>Solve: x = ${formatValue(xi, useDec)}</li>`;
+      block += `</ol><p>So the x-intercept is (${formatValue(xi, useDec)}, 0)</p>`;
     } else {
       block += `<p>No x-intercept</p>`;
     }
@@ -194,10 +235,10 @@ function plot() {
       traces.push({ x: [0], y: [yi], mode: 'markers', name: `Eq${idx + 1} y-int` });
       const sign = eq.a >= 0 ? '+' : '-';
       block += `<p><strong>y-intercept</strong></p><ol>`;
-      block += `<li>Set x = 0: ${eq.a.toFixed(2)}·0 ${sign} ${Math.abs(eq.b).toFixed(2)}y = ${eq.c.toFixed(2)}</li>`;
-      block += `<li>Simplify: ${eq.b.toFixed(2)}y = ${eq.c.toFixed(2)}</li>`;
-      block += `<li>Solve: y = ${formatNumber(yi)}</li>`;
-      block += `</ol><p>So the y-intercept is (0, ${formatNumber(yi)})</p>`;
+      block += `<li>Set x = 0: ${formatValue(eq.a, useDec)}·0 ${sign} ${formatValue(Math.abs(eq.b), useDec)}y = ${formatValue(eq.c, useDec)}</li>`;
+      block += `<li>Simplify: ${formatValue(eq.b, useDec)}y = ${formatValue(eq.c, useDec)}</li>`;
+      block += `<li>Solve: y = ${formatValue(yi, useDec)}</li>`;
+      block += `</ol><p>So the y-intercept is (0, ${formatValue(yi, useDec)})</p>`;
     } else {
       block += `<p>No y-intercept</p>`;
     }
@@ -211,42 +252,42 @@ function plot() {
     let inter = '<div class="solution-block"><h3>Intersection</h3>';
     if (eq1.b !== 0 && eq2.b !== 0) {
       inter += '<p>Eliminate y:</p><ol>';
-      inter += `<li>Multiply Eq1 by ${eq2.b.toFixed(2)} and Eq2 by ${eq1.b.toFixed(2)}.</li>`;
-      const coeff1 = (eq1.a * eq2.b).toFixed(2);
-      const coeff2 = (eq2.a * eq1.b).toFixed(2);
-      const const1 = (eq1.c * eq2.b).toFixed(2);
-      const const2 = (eq2.c * eq1.b).toFixed(2);
+      inter += `<li>Multiply Eq1 by ${formatValue(eq2.b, useDecInter)} and Eq2 by ${formatValue(eq1.b, useDecInter)}.</li>`;
+      const coeff1 = formatValue(eq1.a * eq2.b, useDecInter);
+      const coeff2 = formatValue(eq2.a * eq1.b, useDecInter);
+      const const1 = formatValue(eq1.c * eq2.b, useDecInter);
+      const const2 = formatValue(eq2.c * eq1.b, useDecInter);
       inter += `<li>Subtract to eliminate y: ${coeff1}x - ${coeff2}x = ${const1} - ${const2}</li>`;
-      inter += `<li>${(eq1.a * eq2.b - eq2.a * eq1.b).toFixed(2)}x = ${(eq1.c * eq2.b - eq2.c * eq1.b).toFixed(2)}</li>`;
-      inter += `<li>x = ${formatNumber(intersection.x)}</li></ol>`;
+      inter += `<li>${formatValue(eq1.a * eq2.b - eq2.a * eq1.b, useDecInter)}x = ${formatValue(eq1.c * eq2.b - eq2.c * eq1.b, useDecInter)}</li>`;
+      inter += `<li>x = ${formatValue(intersection.x, useDecInter)}</li></ol>`;
       inter += '<p>Substitute x into Eq1:</p><ol>';
       const sign = eq1.b >= 0 ? '+' : '-';
-      inter += `<li>${eq1.a.toFixed(2)}(${formatNumber(intersection.x)}) ${sign} ${Math.abs(eq1.b).toFixed(2)}y = ${eq1.c.toFixed(2)}</li>`;
-      inter += `<li>${(eq1.a * intersection.x).toFixed(2)} ${sign} ${Math.abs(eq1.b).toFixed(2)}y = ${eq1.c.toFixed(2)}</li>`;
-      inter += `<li>${eq1.b.toFixed(2)}y = ${(eq1.c - eq1.a * intersection.x).toFixed(2)}</li>`;
-      inter += `<li>y = ${formatNumber(intersection.y)}</li></ol>`;
+      inter += `<li>${formatValue(eq1.a, useDecInter)}(${formatValue(intersection.x, useDecInter)}) ${sign} ${formatValue(Math.abs(eq1.b), useDecInter)}y = ${formatValue(eq1.c, useDecInter)}</li>`;
+      inter += `<li>${formatValue(eq1.a * intersection.x, useDecInter)} ${sign} ${formatValue(Math.abs(eq1.b), useDecInter)}y = ${formatValue(eq1.c, useDecInter)}</li>`;
+      inter += `<li>${formatValue(eq1.b, useDecInter)}y = ${formatValue(eq1.c - eq1.a * intersection.x, useDecInter)}</li>`;
+      inter += `<li>y = ${formatValue(intersection.y, useDecInter)}</li></ol>`;
     } else if (eq1.b === 0 && eq2.b !== 0) {
       const x1 = eq1.c / eq1.a;
-      inter += `<p>Eq1 is vertical: x = ${formatNumber(x1)}</p>`;
+      inter += `<p>Eq1 is vertical: x = ${formatValue(x1, useDecInter)}</p>`;
       inter += '<p>Substitute into Eq2:</p><ol>';
       const sign = eq2.b >= 0 ? '+' : '-';
-      inter += `<li>${eq2.a.toFixed(2)}(${formatNumber(x1)}) ${sign} ${Math.abs(eq2.b).toFixed(2)}y = ${eq2.c.toFixed(2)}</li>`;
-      inter += `<li>${(eq2.a * x1).toFixed(2)} ${sign} ${Math.abs(eq2.b).toFixed(2)}y = ${eq2.c.toFixed(2)}</li>`;
-      inter += `<li>${eq2.b.toFixed(2)}y = ${(eq2.c - eq2.a * x1).toFixed(2)}</li>`;
-      inter += `<li>y = ${formatNumber(intersection.y)}</li></ol>`;
+      inter += `<li>${formatValue(eq2.a, useDecInter)}(${formatValue(x1, useDecInter)}) ${sign} ${formatValue(Math.abs(eq2.b), useDecInter)}y = ${formatValue(eq2.c, useDecInter)}</li>`;
+      inter += `<li>${formatValue(eq2.a * x1, useDecInter)} ${sign} ${formatValue(Math.abs(eq2.b), useDecInter)}y = ${formatValue(eq2.c, useDecInter)}</li>`;
+      inter += `<li>${formatValue(eq2.b, useDecInter)}y = ${formatValue(eq2.c - eq2.a * x1, useDecInter)}</li>`;
+      inter += `<li>y = ${formatValue(intersection.y, useDecInter)}</li></ol>`;
     } else if (eq2.b === 0 && eq1.b !== 0) {
       const x2 = eq2.c / eq2.a;
-      inter += `<p>Eq2 is vertical: x = ${formatNumber(x2)}</p>`;
+      inter += `<p>Eq2 is vertical: x = ${formatValue(x2, useDecInter)}</p>`;
       inter += '<p>Substitute into Eq1:</p><ol>';
       const sign = eq1.b >= 0 ? '+' : '-';
-      inter += `<li>${eq1.a.toFixed(2)}(${formatNumber(x2)}) ${sign} ${Math.abs(eq1.b).toFixed(2)}y = ${eq1.c.toFixed(2)}</li>`;
-      inter += `<li>${(eq1.a * x2).toFixed(2)} ${sign} ${Math.abs(eq1.b).toFixed(2)}y = ${eq1.c.toFixed(2)}</li>`;
-      inter += `<li>${eq1.b.toFixed(2)}y = ${(eq1.c - eq1.a * x2).toFixed(2)}</li>`;
-      inter += `<li>y = ${formatNumber(intersection.y)}</li></ol>`;
+      inter += `<li>${formatValue(eq1.a, useDecInter)}(${formatValue(x2, useDecInter)}) ${sign} ${formatValue(Math.abs(eq1.b), useDecInter)}y = ${formatValue(eq1.c, useDecInter)}</li>`;
+      inter += `<li>${formatValue(eq1.a * x2, useDecInter)} ${sign} ${formatValue(Math.abs(eq1.b), useDecInter)}y = ${formatValue(eq1.c, useDecInter)}</li>`;
+      inter += `<li>${formatValue(eq1.b, useDecInter)}y = ${formatValue(eq1.c - eq1.a * x2, useDecInter)}</li>`;
+      inter += `<li>y = ${formatValue(intersection.y, useDecInter)}</li></ol>`;
     } else {
       inter += '<p>Both lines are vertical. No single intersection point.</p>';
     }
-    inter += `<p>Intersection point: (${formatNumber(intersection.x)}, ${formatNumber(intersection.y)})</p>`;
+    inter += `<p>Intersection point: (${formatValue(intersection.x, useDecInter)}, ${formatValue(intersection.y, useDecInter)})</p>`;
     inter += '</div>';
     solHtml += inter;
   } else if (eq1 && eq2) {
