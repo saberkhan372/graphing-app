@@ -46,19 +46,24 @@ function parseEquation(str) {
   }
 
   function parseSide(side) {
-    const res = { x: 0, y: 0, const: 0 };
+    const res = { x: 0, y: 0, const: 0, hasDec: false };
     const terms = side.match(/[+-]?[^+-]+/g);
     if (!terms) return res;
     for (const t of terms) {
       if (t.includes('x')) {
-        const coef = parseCoef(t.replace('x', ''));
+        const coefStr = t.replace('x', '');
+        if (coefStr.includes('.')) res.hasDec = true;
+        const coef = parseCoef(coefStr);
         if (!isFinite(coef)) return null;
         res.x += coef;
       } else if (t.includes('y')) {
-        const coef = parseCoef(t.replace('y', ''));
+        const coefStr = t.replace('y', '');
+        if (coefStr.includes('.')) res.hasDec = true;
+        const coef = parseCoef(coefStr);
         if (!isFinite(coef)) return null;
         res.y += coef;
       } else {
+        if (t.includes('.')) res.hasDec = true;
         const coef = parseCoef(t);
         if (!isFinite(coef)) return null;
         res.const += coef;
@@ -78,14 +83,8 @@ function parseEquation(str) {
   const c = right.const - left.const;
   if (!isFinite(a) || !isFinite(b) || !isFinite(c)) return null;
   if (a === 0 && b === 0) return null;
-  return { a, b, c };
-}
-
-// Detect whether the user explicitly typed a decimal point.
-// Any appearance of "." in the raw equation triggers decimal
-// formatting; otherwise numbers are rendered as fractions.
-function containsDecimal(str) {
-  return str.includes('.');
+  const hasDecimal = left.hasDec || right.hasDec;
+  return { a, b, c, hasDecimal };
 }
 
 function gcd(a, b) {
@@ -152,9 +151,12 @@ function plot() {
   const raw1 = document.getElementById('eq1').value;
   const raw2 = document.getElementById('eq2').value;
 
+  const eq1Parsed = parseEquation(raw1);
+  const eq2Parsed = parseEquation(raw2);
+
   const data = [
-    { raw: raw1, eq: parseEquation(raw1), useDec: containsDecimal(raw1) },
-    { raw: raw2, eq: parseEquation(raw2), useDec: containsDecimal(raw2) }
+    { raw: raw1, eq: eq1Parsed, useDec: eq1Parsed ? eq1Parsed.hasDecimal : false },
+    { raw: raw2, eq: eq2Parsed, useDec: eq2Parsed ? eq2Parsed.hasDecimal : false }
   ];
 
   // Show equation forms for each input
