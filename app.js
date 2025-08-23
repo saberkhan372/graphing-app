@@ -1,37 +1,60 @@
 function parseEquation(str) {
   if (!str) return null;
-  str = str.replace(/\s+/g, '').toLowerCase();
+
+  // normalize whitespace and various minus symbols
+  str = str
+    .replace(/\u2212|\u2013|\u2014|\uFE63|\uFF0D/g, '-')
+    .replace(/\s+/g, '')
+    .toLowerCase();
 
   function parseCoef(s) {
     if (s === '' || s === '+') return 1;
     if (s === '-') return -1;
     if (s.includes('/')) {
-      const [num, den] = s.split('/').map(parseFloat);
+      let [num, den] = s.split('/');
+      if (num === '' || num === '+') num = 1;
+      else if (num === '-') num = -1;
+      else num = parseFloat(num);
+      den = parseFloat(den);
       if (!isFinite(num) || !isFinite(den) || den === 0) return NaN;
       return num / den;
     }
     return parseFloat(s);
   }
 
-  // y = mx + b
-  let slope = str.match(/^y=([+-]?[\d./]*)x([+-][\d./]*)?$/);
-  if (slope) {
-    let m = parseCoef(slope[1]);
-    let b = parseCoef(slope[2] || '0');
-    if (!isFinite(m) || !isFinite(b)) return null;
-    return { a: -m, b: 1, c: b };
+  function parseSide(side) {
+    const res = { x: 0, y: 0, const: 0 };
+    const terms = side.match(/[+-]?[^+-]+/g);
+    if (!terms) return res;
+    for (const t of terms) {
+      if (t.includes('x')) {
+        const coef = parseCoef(t.replace('x', ''));
+        if (!isFinite(coef)) return null;
+        res.x += coef;
+      } else if (t.includes('y')) {
+        const coef = parseCoef(t.replace('y', ''));
+        if (!isFinite(coef)) return null;
+        res.y += coef;
+      } else {
+        const coef = parseCoef(t);
+        if (!isFinite(coef)) return null;
+        res.const += coef;
+      }
+    }
+    return res;
   }
 
-  // ax + by = c
-  let standard = str.match(/^([+-]?[\d./]*)x([+-][\d./]*)y=([+-]?[\d./]*)$/);
-  if (standard) {
-    let a = parseCoef(standard[1]);
-    let b = parseCoef(standard[2]);
-    let c = parseCoef(standard[3]);
-    if (!isFinite(a) || !isFinite(b) || !isFinite(c)) return null;
-    return { a, b, c };
-  }
-  return null;
+  const parts = str.split('=');
+  if (parts.length !== 2) return null;
+  const left = parseSide(parts[0]);
+  const right = parseSide(parts[1]);
+  if (!left || !right) return null;
+
+  const a = left.x - right.x;
+  const b = left.y - right.y;
+  const c = right.const - left.const;
+  if (!isFinite(a) || !isFinite(b) || !isFinite(c)) return null;
+  return { a, b, c };
 }
 
 function formatNumber(num) {
@@ -46,8 +69,10 @@ function displayForms(elemId, eq) {
   }
   const m = -eq.a / eq.b;
   const b = eq.c / eq.b;
-  const std = `${eq.a.toFixed(2)}x + ${eq.b.toFixed(2)}y = ${eq.c.toFixed(2)}`;
-  const slope = `y = ${m.toFixed(2)}x + ${b.toFixed(2)}`;
+  const formatTerm = (coef, variable) =>
+    `${coef >= 0 ? '+' : '-'} ${Math.abs(coef).toFixed(2)}${variable}`;
+  const std = `${eq.a.toFixed(2)}x ${formatTerm(eq.b, 'y')} = ${eq.c.toFixed(2)}`;
+  const slope = `y = ${m.toFixed(2)}x ${formatTerm(b, '')}`;
   elem.textContent = std + '\n' + slope;
 }
 
