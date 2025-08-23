@@ -62,6 +62,11 @@ function formatNumber(num) {
   return Number.isFinite(num) ? num.toFixed(2) : 'N/A';
 }
 
+function formatStandard(eq) {
+  const sign = eq.b >= 0 ? '+' : '-';
+  return `${eq.a.toFixed(2)}x ${sign} ${Math.abs(eq.b).toFixed(2)}y = ${eq.c.toFixed(2)}`;
+}
+
 function displayForms(elemId, eq, raw) {
   const elem = document.getElementById(elemId);
   if (!raw.trim()) {
@@ -76,7 +81,7 @@ function displayForms(elemId, eq, raw) {
   const b = eq.c / eq.b;
   const formatTerm = (coef, variable) =>
     `${coef >= 0 ? '+' : '-'} ${Math.abs(coef).toFixed(2)}${variable}`;
-  const std = `${eq.a.toFixed(2)}x ${formatTerm(eq.b, 'y')} = ${eq.c.toFixed(2)}`;
+  const std = formatStandard(eq);
   const slope = `y = ${m.toFixed(2)}x ${formatTerm(b, '')}`;
   elem.textContent = std + '\n' + slope;
 }
@@ -95,6 +100,7 @@ function plot() {
 
   [eq1, eq2].forEach((eq, idx) => {
     if (!eq) return;
+
     let xs = [];
     let ys = [];
     if (eq.b !== 0) {
@@ -111,16 +117,35 @@ function plot() {
     }
     traces.push({ x: xs, y: ys, mode: 'lines', name: 'Eq' + (idx + 1) });
 
+    let block = `<div class="solution-block"><h3>Equation ${idx + 1}</h3>`;
+    block += `<p>Standard form: ${formatStandard(eq)}</p>`;
+
     if (eq.a !== 0) {
       const xi = eq.c / eq.a;
       traces.push({ x: [xi], y: [0], mode: 'markers', name: `Eq${idx + 1} x-int` });
-      solHtml += `<p>Eq${idx + 1} x-intercept: (${formatNumber(xi)}, 0)</p>`;
+      const sign = eq.b >= 0 ? '+' : '-';
+      block += `<p><strong>x-intercept</strong></p><ol>`;
+      block += `<li>Set y = 0: ${eq.a.toFixed(2)}x ${sign} ${Math.abs(eq.b).toFixed(2)}·0 = ${eq.c.toFixed(2)}</li>`;
+      block += `<li>Simplify: ${eq.a.toFixed(2)}x = ${eq.c.toFixed(2)}</li>`;
+      block += `<li>Solve: x = ${formatNumber(xi)}</li></ol>`;
+    } else {
+      block += `<p>No x-intercept</p>`;
     }
+
     if (eq.b !== 0) {
       const yi = eq.c / eq.b;
       traces.push({ x: [0], y: [yi], mode: 'markers', name: `Eq${idx + 1} y-int` });
-      solHtml += `<p>Eq${idx + 1} y-intercept: (0, ${formatNumber(yi)})</p>`;
+      const sign = eq.a >= 0 ? '+' : '-';
+      block += `<p><strong>y-intercept</strong></p><ol>`;
+      block += `<li>Set x = 0: ${eq.a.toFixed(2)}·0 ${sign} ${Math.abs(eq.b).toFixed(2)}y = ${eq.c.toFixed(2)}</li>`;
+      block += `<li>Simplify: ${eq.b.toFixed(2)}y = ${eq.c.toFixed(2)}</li>`;
+      block += `<li>Solve: y = ${formatNumber(yi)}</li></ol>`;
+    } else {
+      block += `<p>No y-intercept</p>`;
     }
+
+    block += `</div>`;
+    solHtml += block;
   });
 
   if (eq1 && eq2) {
@@ -129,7 +154,50 @@ function plot() {
       const x = (eq1.c * eq2.b - eq2.c * eq1.b) / det;
       const y = (eq1.a * eq2.c - eq2.a * eq1.c) / det;
       traces.push({ x: [x], y: [y], mode: 'markers', marker: { size: 10 }, name: 'Intersection' });
-      solHtml += `<p>Intersection: (${formatNumber(x)}, ${formatNumber(y)})</p>`;
+
+      let inter = '<div class="solution-block"><h3>Intersection</h3>';
+
+      if (eq1.b !== 0 && eq2.b !== 0) {
+        inter += '<p>Eliminate y:</p><ol>';
+        inter += `<li>Multiply Eq1 by ${eq2.b.toFixed(2)} and Eq2 by ${eq1.b.toFixed(2)}.</li>`;
+        const coeff1 = (eq1.a * eq2.b).toFixed(2);
+        const coeff2 = (eq2.a * eq1.b).toFixed(2);
+        const const1 = (eq1.c * eq2.b).toFixed(2);
+        const const2 = (eq2.c * eq1.b).toFixed(2);
+        inter += `<li>Subtract to eliminate y: ${coeff1}x - ${coeff2}x = ${const1} - ${const2}</li>`;
+        inter += `<li>${(eq1.a * eq2.b - eq2.a * eq1.b).toFixed(2)}x = ${(eq1.c * eq2.b - eq2.c * eq1.b).toFixed(2)}</li>`;
+        inter += `<li>x = ${formatNumber(x)}</li></ol>`;
+        inter += '<p>Substitute x into Eq1:</p><ol>';
+        const sign = eq1.b >= 0 ? '+' : '-';
+        inter += `<li>${eq1.a.toFixed(2)}(${formatNumber(x)}) ${sign} ${Math.abs(eq1.b).toFixed(2)}y = ${eq1.c.toFixed(2)}</li>`;
+        inter += `<li>${(eq1.a * x).toFixed(2)} ${sign} ${Math.abs(eq1.b).toFixed(2)}y = ${eq1.c.toFixed(2)}</li>`;
+        inter += `<li>${eq1.b.toFixed(2)}y = ${(eq1.c - eq1.a * x).toFixed(2)}</li>`;
+        inter += `<li>y = ${formatNumber(y)}</li></ol>`;
+      } else if (eq1.b === 0 && eq2.b !== 0) {
+        const x1 = eq1.c / eq1.a;
+        inter += `<p>Eq1 is vertical: x = ${formatNumber(x1)}</p>`;
+        inter += '<p>Substitute into Eq2:</p><ol>';
+        const sign = eq2.b >= 0 ? '+' : '-';
+        inter += `<li>${eq2.a.toFixed(2)}(${formatNumber(x1)}) ${sign} ${Math.abs(eq2.b).toFixed(2)}y = ${eq2.c.toFixed(2)}</li>`;
+        inter += `<li>${(eq2.a * x1).toFixed(2)} ${sign} ${Math.abs(eq2.b).toFixed(2)}y = ${eq2.c.toFixed(2)}</li>`;
+        inter += `<li>${eq2.b.toFixed(2)}y = ${(eq2.c - eq2.a * x1).toFixed(2)}</li>`;
+        inter += `<li>y = ${formatNumber(y)}</li></ol>`;
+      } else if (eq2.b === 0 && eq1.b !== 0) {
+        const x2 = eq2.c / eq2.a;
+        inter += `<p>Eq2 is vertical: x = ${formatNumber(x2)}</p>`;
+        inter += '<p>Substitute into Eq1:</p><ol>';
+        const sign = eq1.b >= 0 ? '+' : '-';
+        inter += `<li>${eq1.a.toFixed(2)}(${formatNumber(x2)}) ${sign} ${Math.abs(eq1.b).toFixed(2)}y = ${eq1.c.toFixed(2)}</li>`;
+        inter += `<li>${(eq1.a * x2).toFixed(2)} ${sign} ${Math.abs(eq1.b).toFixed(2)}y = ${eq1.c.toFixed(2)}</li>`;
+        inter += `<li>${eq1.b.toFixed(2)}y = ${(eq1.c - eq1.a * x2).toFixed(2)}</li>`;
+        inter += `<li>y = ${formatNumber(y)}</li></ol>`;
+      } else {
+        inter += '<p>Both lines are vertical. No single intersection point.</p>';
+      }
+
+      inter += `<p>Intersection point: (${formatNumber(x)}, ${formatNumber(y)})</p>`;
+      inter += '</div>';
+      solHtml += inter;
     } else {
       solHtml += '<p>No unique intersection</p>';
     }

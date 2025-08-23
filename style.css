@@ -35,3 +35,11 @@ button {
   padding: 5px 10px;
   font-size: 1em;
 }
+
+.solution-block {
+  margin-bottom: 15px;
+}
+
+.solution-block ol {
+  margin: 5px 0 10px 20px;
+}
