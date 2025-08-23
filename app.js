@@ -137,8 +137,8 @@ function plot() {
 
   Plotly.newPlot('graph', traces, {
     margin: { t: 10 },
-    xaxis: { zeroline: true, range: [-10, 10] },
-    yaxis: { zeroline: true, range: [-10, 10], scaleanchor: 'x' }
+    xaxis: { zeroline: true },
+    yaxis: { zeroline: true, scaleanchor: 'x' }
   });
 
   document.getElementById('solutions').innerHTML = solHtml;
