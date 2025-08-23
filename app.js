@@ -1,10 +1,11 @@
 function parseEquation(str) {
   if (!str) return null;
 
-  // normalize whitespace and various minus symbols
+  // normalize whitespace, parentheses, and various minus symbols
   str = str
     .replace(/\u2212|\u2013|\u2014|\uFE63|\uFF0D/g, '-')
     .replace(/\s+/g, '')
+    .replace(/[()]/g, '')
     .toLowerCase();
 
   function parseCoef(s) {
@@ -61,8 +62,12 @@ function formatNumber(num) {
   return Number.isFinite(num) ? num.toFixed(2) : 'N/A';
 }
 
-function displayForms(elemId, eq) {
+function displayForms(elemId, eq, raw) {
   const elem = document.getElementById(elemId);
+  if (!raw.trim()) {
+    elem.textContent = '';
+    return;
+  }
   if (!eq) {
     elem.textContent = 'Invalid equation';
     return;
@@ -77,11 +82,13 @@ function displayForms(elemId, eq) {
 }
 
 function plot() {
-  const eq1 = parseEquation(document.getElementById('eq1').value);
-  const eq2 = parseEquation(document.getElementById('eq2').value);
+  const raw1 = document.getElementById('eq1').value;
+  const raw2 = document.getElementById('eq2').value;
+  const eq1 = parseEquation(raw1);
+  const eq2 = parseEquation(raw2);
 
-  displayForms('eq1-forms', eq1);
-  displayForms('eq2-forms', eq2);
+  displayForms('eq1-forms', eq1, raw1);
+  displayForms('eq2-forms', eq2, raw2);
 
   const traces = [];
   let solHtml = '';
