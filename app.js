@@ -127,8 +127,8 @@ function plot() {
     const xi = eq.a !== 0 ? eq.c / eq.a : null;
     const yi = eq.b !== 0 ? eq.c / eq.b : null;
     intercepts.push({ xi, yi });
-    if (xi !== null) xVals.push(xi);
-    if (yi !== null) yVals.push(yi);
+    if (xi !== null && isFinite(xi)) xVals.push(xi);
+    if (yi !== null && isFinite(yi)) yVals.push(yi);
   });
 
   let intersection = null;
@@ -138,15 +138,17 @@ function plot() {
       const x = (eq1.c * eq2.b - eq2.c * eq1.b) / det;
       const y = (eq1.a * eq2.c - eq2.a * eq1.c) / det;
       intersection = { x, y };
-      xVals.push(x);
-      yVals.push(y);
+      if (isFinite(x)) xVals.push(x);
+      if (isFinite(y)) yVals.push(y);
     }
   }
 
-  let xMin = Math.min(...xVals);
-  let xMax = Math.max(...xVals);
-  let yMin = Math.min(...yVals);
-  let yMax = Math.max(...yVals);
+  const finiteX = xVals.filter(isFinite);
+  const finiteY = yVals.filter(isFinite);
+  let xMin = finiteX.length ? Math.min(...finiteX) : -10;
+  let xMax = finiteX.length ? Math.max(...finiteX) : 10;
+  let yMin = finiteY.length ? Math.min(...finiteY) : -10;
+  let yMax = finiteY.length ? Math.max(...finiteY) : 10;
   const padX = (xMax - xMin) * 0.2 || 1;
   const padY = (yMax - yMin) * 0.2 || 1;
   xMin -= padX;
