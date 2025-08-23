@@ -1,6 +1,8 @@
 function parseEquation(str) {
   if (!str) return null;
 
+  let hasDecimal = false;
+
   // normalize whitespace, parentheses, unicode minus signs, and common fractions
   const fracMap = {
     '\u00BC': '1/4', // ¼
@@ -31,6 +33,7 @@ function parseEquation(str) {
     .toLowerCase();
 
   function parseCoef(s) {
+    if (s.includes('.')) hasDecimal = true;
     if (s === '' || s === '+') return 1;
     if (s === '-') return -1;
     if (s.includes('/')) {
@@ -78,11 +81,11 @@ function parseEquation(str) {
   const c = right.const - left.const;
   if (!isFinite(a) || !isFinite(b) || !isFinite(c)) return null;
   if (a === 0 && b === 0) return null;
-  return { a, b, c };
+  return { a, b, c, hasDecimal };
 }
 
 function containsDecimal(str) {
-  return str.includes('.');
+  return /\d+\.\d+/.test(str);
 }
 
 function gcd(a, b) {
@@ -151,8 +154,8 @@ function plot() {
   const eq1 = parseEquation(raw1);
   const eq2 = parseEquation(raw2);
 
-  const useDec1 = containsDecimal(raw1);
-  const useDec2 = containsDecimal(raw2);
+  const useDec1 = eq1 ? eq1.hasDecimal : containsDecimal(raw1);
+  const useDec2 = eq2 ? eq2.hasDecimal : containsDecimal(raw2);
   const useDecInter = useDec1 || useDec2;
 
   displayForms('eq1-forms', eq1, raw1, useDec1);
