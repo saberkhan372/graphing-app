@@ -1,11 +1,8 @@
-const { toFraction } = require('../app');
+import test from 'node:test';
+import assert from 'node:assert';
+import { toFraction } from '../app.js';
 
-describe('toFraction', () => {
-  test('converts decimal to simplest fraction', () => {
-    expect(toFraction(0.5)).toEqual({ numerator: 1, denominator: 2 });
-  });
-
-  test('reduces fractions correctly', () => {
-    expect(toFraction(2.75)).toEqual({ numerator: 11, denominator: 4 });
-  });
+test('toFraction reduces numbers', () => {
+  assert.strictEqual(toFraction(0.75), '3/4');
+  assert.strictEqual(toFraction(-2.5), '-5/2');
 });

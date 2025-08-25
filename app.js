@@ -310,5 +310,13 @@ function plot() {
   if (window.MathJax) MathJax.typesetPromise();
 }
 
-document.getElementById('plot-btn').addEventListener('click', plot);
-<<<
+if (typeof document !== 'undefined') {
+  document.getElementById('plot-btn').addEventListener('click', plot);
+}
+
+export { parseEquation, toFraction };
+
+if (typeof module !== 'undefined') {
+  module.exports = { parseEquation, toFraction };
+}
+

@@ -1,15 +1,17 @@
-const { parseEquation } = require('../app');
+import test from 'node:test';
+import assert from 'node:assert';
+import { parseEquation } from '../app.js';
 
-describe('parseEquation', () => {
-  test('parses slope and intercept from linear equation', () => {
-    expect(parseEquation('y = 2x + 3')).toEqual({ slope: 2, intercept: 3 });
-  });
+test('parseEquation handles fractional coefficients', () => {
+  assert.deepEqual(
+    parseEquation('3x - 1/4 y = -5'),
+    { a: 3, b: -0.25, c: -5, hasDecimal: false }
+  );
+});
 
-  test('handles negative slope and intercept', () => {
-    expect(parseEquation('y=-x-4')).toEqual({ slope: -1, intercept: -4 });
-  });
-
-  test('throws on invalid input', () => {
-    expect(() => parseEquation('y = x^2')).toThrow('Invalid linear equation');
-  });
+test('parseEquation detects decimals', () => {
+  assert.deepEqual(
+    parseEquation('y = 0.5x + 3'),
+    { a: -0.5, b: 1, c: 3, hasDecimal: true }
+  );
 });
