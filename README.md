@@ -12,11 +12,6 @@ npm test
 
 ## Serving the app
 
-Install dependencies and start the bundled static server:
-
-```bash
-npm install
-npm start
 ```
 
 Then open the displayed URL in your browser.
