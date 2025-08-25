@@ -12,10 +12,6 @@ npm test
 
 ## Serving the app
 
-Any static file server will work. If you have `http-server` installed, run:
-
-```bash
-npx http-server .
 ```
 
 Then open the displayed URL in your browser.
