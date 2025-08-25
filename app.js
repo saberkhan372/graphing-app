@@ -87,10 +87,31 @@ function parseEquation(str) {
   return { a, b, c, hasDecimal };
 }
 
+function toFraction(x) {
+  const sign = x < 0 ? -1 : 1;
+  x = Math.abs(x);
+  const tolerance = 1e-9;
+  let h1 = 1,
+    h2 = 0,
+    k1 = 0,
+    k2 = 1,
+    b = x;
+  do {
+    const a = Math.floor(b);
+    [h1, h2] = [a * h1 + h2, h1];
+    [k1, k2] = [a * k1 + k2, k1];
+    const approx = h1 / k1;
+    if (Math.abs(approx - x) <= x * tolerance) break;
+    b = 1 / (b - a);
+  } while (true);
+  const result = k1 === 1 ? `${h1}` : `${h1}/${k1}`;
+  return sign < 0 ? `-${result}` : result;
+}
+
 function formatValue(num, useDecimal) {
   if (!Number.isFinite(num)) return 'N/A';
   if (useDecimal) return num.toFixed(2);
-  return new Fraction(num).toFraction();
+  return toFraction(num);
 }
 
 function formatStandard(eq, useDecimal) {
