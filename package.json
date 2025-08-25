@@ -1,0 +1,10 @@
+{
+  "name": "graphing-app",
+  "version": "1.0.0",
+  "description": "Simple algebra graphing app",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "license": "MIT"
+}

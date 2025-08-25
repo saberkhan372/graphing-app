@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Algebra 1 Graphing App</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.plot.ly/plotly-3.1.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  </head>
+<body>
+  <div id="container">
+    <div id="input-column" class="column">
+      <h2>Equations</h2>
+      <div class="eq-input">
+        <label for="eq1">Equation 1:</label>
+        <input type="text" id="eq1" placeholder="e.g. 2x + 3y = 6" />
+        <div id="eq1-forms" class="forms"></div>
+      </div>
+      <div class="eq-input">
+        <label for="eq2">Equation 2:</label>
+        <input type="text" id="eq2" placeholder="e.g. y = 2x + 1" />
+        <div id="eq2-forms" class="forms"></div>
+      </div>
+      <button id="plot-btn">Plot</button>
+    </div>
+    <div id="graph-column" class="column">
+      <h2>Graph</h2>
+      <div id="graph"></div>
+    </div>
+    <div id="solution-column" class="column">
+      <h2>Solutions</h2>
+      <div id="solutions"></div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
