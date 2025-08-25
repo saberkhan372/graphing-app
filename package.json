@@ -1,9 +1,24 @@
 {
   "name": "graphing-app",
   "version": "1.0.0",
+<<<<<<< HEAD
   "description": "Simple algebra graphing app",
   "scripts": {
     "test": "echo \"No tests specified\""
   },
   "license": "MIT"
+=======
+  "description": "Hello",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "jest": "^30.0.5"
+  }
+>>>>>>> codex/add-jest-to-devdependencies-and-create-tests
 }
