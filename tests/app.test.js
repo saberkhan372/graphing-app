@@ -26,3 +26,4 @@ test('toFraction reduces numbers', () => {
   assert.strictEqual(toFraction(0.75), '3/4');
   assert.strictEqual(toFraction(-2.5), '-5/2');
 });
+
