@@ -19,3 +19,14 @@ npx http-server .
 ```
 
 Then open the displayed URL in your browser.
+
+## Database schema
+
+The `db/schema.sql` file contains the PostgreSQL schema for user management, course content, progress tracking, and assessment records. Load it into a database with:
+
+```bash
+psql -f db/schema.sql
+```
+
+Ensure PostgreSQL and the `psql` CLI are installed before running the command.
+
