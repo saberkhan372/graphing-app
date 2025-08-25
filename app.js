@@ -1,3 +1,4 @@
+// Core logic for parsing linear equations and converting numbers to fractions
 function parseEquation(str) {
   if (!str) return null;
 

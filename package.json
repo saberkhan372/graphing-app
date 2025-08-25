@@ -4,7 +4,11 @@
   "description": "Simple algebra graphing app",
   "type": "module",
   "scripts": {
+    "start": "http-server .",
     "test": "node --test"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
   },
   "license": "MIT"
 }
