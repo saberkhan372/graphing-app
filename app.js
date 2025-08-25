@@ -1,4 +1,4 @@
-// Core logic for parsing linear equations and converting numbers to fractions
+
 function parseEquation(str) {
   if (!str) return null;
 
@@ -311,3 +311,4 @@ function plot() {
 }
 
 document.getElementById('plot-btn').addEventListener('click', plot);
+<<<
