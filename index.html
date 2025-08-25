@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Graphing App</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <div id="plot"></div>
+  <script>
+    var trace = {
+      x: [1, 2, 3, 4],
+      y: [1, 4, 9, 16],
+      type: 'scatter'
+    };
+
+    var layout = {
+      xaxis: { title: 'x', showgrid: true, constrain: 'domain' },
+      yaxis: { title: 'y', showgrid: true, scaleanchor: 'x', scaleratio: 1 }
+    };
+
+    Plotly.newPlot('plot', [trace], layout);
+  </script>
+</body>
+</html>
