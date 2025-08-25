@@ -311,4 +311,8 @@ function plot() {
 }
 
 document.getElementById('plot-btn').addEventListener('click', plot);
-<<<
+
+if (typeof module !== 'undefined') {
+  module.exports = { parseEquation, toFraction };
+}
+
